@@ -46,7 +46,8 @@ void main() {
         expect(75.6.toPercent(multiply: false), '75.6%');
       });
       test('respects decimal places', () {
-        expect(0.756.toPercent(decimalPlaces: 0), '75.6%');
+        expect(0.756.toPercent(decimalPlaces: 0), '76%');
+        expect(0.756.toPercent(decimalPlaces: 2), '75.60%');
       });
     });
 
