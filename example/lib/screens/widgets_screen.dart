@@ -1,6 +1,8 @@
 import 'package:app_kit/app_kit.dart';
 import 'package:flutter/material.dart';
 
+import '../services/theme_service.dart';
+
 class WidgetsScreen extends StatefulWidget {
   const WidgetsScreen({super.key});
 
@@ -72,8 +74,11 @@ class _WidgetsScreenState extends State<WidgetsScreen> {
                 AppListTile(
                   title: 'Dark Mode',
                   leading: const Icon(Icons.dark_mode_outlined),
-                  trailing: Switch(value: context.isDark, onChanged: (_) {}),
-                  onTap: () {},
+                  trailing: Switch(
+                    value: context.isDark,
+                    onChanged: (_) => locate<ThemeService>().toggleTheme(),
+                  ),
+                  onTap: () => locate<ThemeService>().toggleTheme(),
                 ),
               ]),
             ),
