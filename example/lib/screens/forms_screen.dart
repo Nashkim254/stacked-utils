@@ -17,10 +17,19 @@ class _FormsScreenState extends State<FormsScreen> {
   final _searchCtrl   = TextEditingController();
 
   String? _selectedCountry;
+  String? _selectedCity;
   bool _submitting = false;
   String _searchQuery = '';
 
   static const _countries = ['Nigeria', 'Ghana', 'Kenya', 'South Africa', 'Egypt'];
+
+  static const _cities = [
+    'Lagos', 'Abuja', 'Kano', 'Ibadan', 'Port Harcourt',
+    'Accra', 'Kumasi', 'Tamale',
+    'Nairobi', 'Mombasa', 'Kisumu',
+    'Johannesburg', 'Cape Town', 'Durban', 'Pretoria',
+    'Cairo', 'Alexandria', 'Giza',
+  ];
 
   @override
   void dispose() {
@@ -65,6 +74,25 @@ class _FormsScreenState extends State<FormsScreen> {
             if (_searchQuery.isNotEmpty) ...[
               const Gap(AppSpacing.sm),
               Text('Query: "$_searchQuery"',
+                  style: AppTextStyles.bodySm.copyWith(color: AppColors.grey500)),
+            ],
+
+            const Gap(AppSpacing.xl),
+
+            // ── Select search ─────────────────────────────────────────────
+            Text('AppSelectSearch', style: context.textTheme.headlineSmall),
+            const Gap(AppSpacing.md),
+            AppSelectSearch<String>(
+              label: 'City',
+              hint: 'Type to search cities…',
+              items: _cities,
+              displayLabel: (c) => c,
+              value: _selectedCity,
+              onSelected: (c) => setState(() => _selectedCity = c),
+            ),
+            if (_selectedCity != null) ...[
+              const Gap(AppSpacing.sm),
+              Text('Selected: $_selectedCity',
                   style: AppTextStyles.bodySm.copyWith(color: AppColors.grey500)),
             ],
 

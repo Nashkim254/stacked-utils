@@ -58,3 +58,4 @@ export 'ui/shared/app_search_field.dart';
 export 'ui/shared/app_list_tile.dart';
 export 'ui/shared/app_network_image.dart';
 export 'ui/shared/app_dropdown.dart';
+export 'ui/shared/app_select_search.dart';
