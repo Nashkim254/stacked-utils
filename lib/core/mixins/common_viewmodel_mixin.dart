@@ -47,6 +47,39 @@ mixin CommonViewModel on BaseViewModel {
     }
   }
 
+  /// Like [run] but returns the result of [fn] instead of `void`.
+  /// Returns `null` if an error occurs.
+  ///
+  /// ```dart
+  /// final user = await runAndReturn(() => _userService.getUser(id));
+  /// if (user != null) _user = user;
+  /// ```
+  Future<T?> runAndReturn<T>(
+    Future<T> Function() fn, {
+    String? busyKey,
+    String? errorMsg,
+    bool showSnackbarOnError = false,
+  }) async {
+    busyKey != null ? setBusyForObject(busyKey, true) : setBusy(true);
+    notifyListeners();
+    try {
+      return await fn();
+    } catch (e) {
+      final message = errorMsg ??
+          (e is Exception
+              ? e.toString().replaceFirst('Exception: ', '')
+              : 'Something went wrong');
+      setError(message);
+      if (showSnackbarOnError) {
+        snackbarService.showSnackbar(message: message);
+      }
+      return null;
+    } finally {
+      busyKey != null ? setBusyForObject(busyKey, false) : setBusy(false);
+      notifyListeners();
+    }
+  }
+
   // ── Dialog helpers ──────────────────────────────────────────────────────
 
   /// Shows a basic dialog. For custom-styled dialogs, call

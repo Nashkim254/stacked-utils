@@ -19,6 +19,7 @@ class AppTextField extends StatefulWidget {
   final TextEditingController? controller;
   final String? Function(String?)? validator;
   final bool obscure;
+  final bool showClearButton;
   final TextInputType keyboardType;
   final TextInputAction textInputAction;
   final Widget? prefix;
@@ -44,6 +45,7 @@ class AppTextField extends StatefulWidget {
     this.controller,
     this.validator,
     this.obscure = false,
+    this.showClearButton = false,
     this.keyboardType = TextInputType.text,
     this.textInputAction = TextInputAction.next,
     this.prefix,
@@ -71,11 +73,49 @@ class AppTextField extends StatefulWidget {
 
 class _AppTextFieldState extends State<AppTextField> {
   late bool _obscured;
+  bool _hasText = false;
 
   @override
   void initState() {
     super.initState();
     _obscured = widget.obscure;
+    _hasText = (widget.controller?.text.isNotEmpty ?? false) ||
+        (widget.initialValue?.isNotEmpty ?? false);
+    widget.controller?.addListener(_onControllerChanged);
+  }
+
+  void _onControllerChanged() {
+    final hasText = widget.controller!.text.isNotEmpty;
+    if (hasText != _hasText) setState(() => _hasText = hasText);
+  }
+
+  @override
+  void dispose() {
+    widget.controller?.removeListener(_onControllerChanged);
+    super.dispose();
+  }
+
+  Widget? get _suffixIcon {
+    // Password field: visibility toggle takes priority
+    if (widget.obscure) {
+      return IconButton(
+        icon: Icon(
+          _obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+        ),
+        onPressed: () => setState(() => _obscured = !_obscured),
+      );
+    }
+    // Clear button when enabled and field has text
+    if (widget.showClearButton && _hasText && widget.controller != null) {
+      return IconButton(
+        icon: const Icon(Icons.close_rounded),
+        onPressed: () {
+          widget.controller!.clear();
+          widget.onChanged?.call('');
+        },
+      );
+    }
+    return widget.suffixIcon;
   }
 
   @override
@@ -89,7 +129,12 @@ class _AppTextFieldState extends State<AppTextField> {
       textInputAction: widget.textInputAction,
       maxLines: _obscured ? 1 : widget.maxLines,
       maxLength: widget.maxLength,
-      onChanged: widget.onChanged,
+      onChanged: (v) {
+        if (widget.showClearButton) {
+          setState(() => _hasText = v.isNotEmpty);
+        }
+        widget.onChanged?.call(v);
+      },
       onEditingComplete: widget.onEditingComplete,
       onFieldSubmitted: widget.onSubmitted,
       inputFormatters: widget.inputFormatters,
@@ -104,16 +149,7 @@ class _AppTextFieldState extends State<AppTextField> {
         prefix: widget.prefix,
         suffix: widget.suffix,
         prefixIcon: widget.prefixIcon,
-        suffixIcon: widget.obscure
-            ? IconButton(
-                icon: Icon(
-                  _obscured
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                ),
-                onPressed: () => setState(() => _obscured = !_obscured),
-              )
-            : widget.suffixIcon,
+        suffixIcon: _suffixIcon,
         counterText: widget.maxLength != null ? null : '',
       ),
     );

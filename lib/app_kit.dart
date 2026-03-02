@@ -2,14 +2,26 @@
 /// and Stacked base classes for Flutter teams.
 library app_kit;
 
-// ── Core ────────────────────────────────────────────────────────────────────
+// ── Core — Utils ─────────────────────────────────────────────────────────────
 export 'core/utils/result.dart';
 export 'core/utils/validators.dart';
+export 'core/utils/debouncer.dart';
+
+// ── Core — Extensions ────────────────────────────────────────────────────────
 export 'core/extensions/viewmodel_extensions.dart';
 export 'core/extensions/locator_helper.dart';
+export 'core/extensions/string_extensions.dart';
+export 'core/extensions/datetime_extensions.dart';
+export 'core/extensions/num_extensions.dart';
+
+// ── Core — Mixins ────────────────────────────────────────────────────────────
 export 'core/mixins/common_viewmodel_mixin.dart';
+export 'core/mixins/pagination_mixin.dart';
+
+// ── Core — Services ──────────────────────────────────────────────────────────
 export 'core/services/base_api_service.dart';
 export 'core/services/storage_service.dart';
+export 'core/services/connectivity_service.dart';
 
 // ── UI — Constants ───────────────────────────────────────────────────────────
 export 'ui/constants/app_colors.dart';
@@ -42,3 +54,7 @@ export 'ui/shared/app_avatar.dart';
 export 'ui/shared/app_divider.dart';
 export 'ui/shared/app_bottom_sheet.dart';
 export 'ui/shared/status_chip.dart';
+export 'ui/shared/app_search_field.dart';
+export 'ui/shared/app_list_tile.dart';
+export 'ui/shared/app_network_image.dart';
+export 'ui/shared/app_dropdown.dart';

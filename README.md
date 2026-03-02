@@ -15,11 +15,18 @@ import 'package:app_kit/app_kit.dart';
 3. [Core](#core)
    - [Result](#result)
    - [Validators](#validators)
+   - [Debouncer & Throttler](#debouncer--throttler)
    - [ViewModelX Extension](#viewmodelx-extension)
    - [CommonViewModel Mixin](#commonviewmodel-mixin)
+   - [PaginationMixin](#paginationmixin)
    - [Locator Helper](#locator-helper)
    - [BaseApiService](#baseapiservice)
    - [StorageService](#storageservice)
+   - [ConnectivityService](#connectivityservice)
+4. [Core — Extensions](#core--extensions)
+   - [StringX](#stringx)
+   - [DateTimeX](#datetimex)
+   - [NumX / IntX](#numx--intx)
 4. [UI — Constants](#ui--constants)
    - [AppColors](#appcolors)
    - [AppSpacing](#appspacing)
@@ -40,9 +47,13 @@ import 'package:app_kit/app_kit.dart';
    - [ErrorView](#errorview)
    - [ShimmerBox](#shimmerbox)
    - [AppTextField](#apptextfield)
+   - [AppSearchField](#appsearchfield)
+   - [AppDropdown](#appdropdown)
    - [AppButton](#appbutton)
    - [AppIconButton](#appicOnbutton)
    - [AppCard](#appcard)
+   - [AppListTile](#applisttile)
+   - [AppNetworkImage](#appnetworkimage)
    - [AppBadge](#appbadge)
    - [AppAvatar](#appavatar)
    - [AppDivider](#appdivider)
@@ -159,13 +170,56 @@ result.when(
 final Result<String> nameResult = result.map((u) => u?.name ?? '');
 ```
 
+```dart
+// Chain two operations — failure short-circuits
+final result = await getUser(id)
+    .andThen((user) => getOrders(user!.id));
+
+// Transform error messages
+final result = await getUser(id)
+    .mapError((e) => 'Could not load user: $e');
+```
+
 | Member | Description |
 |---|---|
 | `Result.success(data)` | Wraps a successful value |
 | `Result.failure(error)` | Wraps an error string |
 | `isSuccess` / `isFailure` | Boolean checks |
 | `when(onSuccess, onFailure)` | Pattern-match the result |
+| `fold(onSuccess, onFailure)` | Positional alias for `when` |
 | `map(transform)` | Transform the success value |
+| `mapError(transform)` | Transform the error message |
+| `getOrNull()` | Returns data or `null` |
+| `getOrElse(fallback)` | Returns data or a fallback value |
+| `getOrThrow()` | Returns data or throws `StateError` |
+| `andThen(next)` | Chains async `Result`-returning operations |
+
+---
+
+### Debouncer & Throttler
+
+`lib/core/utils/debouncer.dart`
+
+```dart
+// In a widget or ViewModel — declare once, dispose on cleanup
+final _debounce = Debouncer(delay: Duration(milliseconds: 500));
+final _throttle = Throttler(interval: Duration(seconds: 1));
+
+void onSearchChanged(String query) {
+  _debounce(() => viewModel.search(query));  // waits 500 ms after last keystroke
+}
+
+void onSubmitTap() {
+  _throttle(() => viewModel.submit());       // fires once per second max
+}
+
+@override
+void dispose() {
+  _debounce.dispose();
+  _throttle.dispose();
+  super.dispose();
+}
+```
 
 ---
 
@@ -234,6 +288,50 @@ class LoginViewModel extends BaseViewModel {
 
 ---
 
+### PaginationMixin
+
+`lib/core/mixins/pagination_mixin.dart`
+
+```dart
+class PostsViewModel extends BaseViewModel with PaginationMixin {
+  final List<Post> posts = [];
+
+  Future<void> init() => loadFirstPage(
+    fetcher: (page) => _postService.getPosts(page: page, size: pageSize),
+    onSuccess: (items) => posts.addAll(items),
+  );
+
+  Future<void> loadMore() => loadNextPage(
+    fetcher: (page) => _postService.getPosts(page: page, size: pageSize),
+    onSuccess: (items) => posts.addAll(items),
+  );
+}
+```
+
+In the View, trigger `loadMore()` when the user scrolls to the bottom:
+
+```dart
+NotificationListener<ScrollEndNotification>(
+  onNotification: (n) {
+    if (n.metrics.extentAfter == 0) viewModel.loadMore();
+    return false;
+  },
+  child: ListView.builder(...),
+)
+```
+
+| Member | Description |
+|---|---|
+| `currentPage` | Current page number |
+| `hasMore` | Whether more pages exist |
+| `isLoadingMore` | True while a next-page request is in flight |
+| `pageSize` | Items per page (default 20, set before first load) |
+| `loadFirstPage(fetcher, onSuccess)` | Resets and loads page 1 |
+| `loadNextPage(fetcher, onSuccess)` | Appends next page; no-op when `hasMore` is false |
+| `resetPagination()` | Resets to page 1 |
+
+---
+
 ### CommonViewModel Mixin
 
 `lib/core/mixins/common_viewmodel_mixin.dart`
@@ -272,7 +370,8 @@ class HomeViewModel extends BaseViewModel with CommonViewModel {
 
 | Method | Description |
 |---|---|
-| `run(fn, {busyKey, errorMsg, showSnackbarOnError})` | Busy + error wrapper |
+| `run(fn, {busyKey, errorMsg, showSnackbarOnError})` | Busy + error wrapper, returns void |
+| `runAndReturn<T>(fn, {busyKey, errorMsg})` | Like `run` but returns `T?` |
 | `showSuccessDialog(message)` | Success dialog |
 | `showErrorDialog(message)` | Error dialog |
 | `showConfirmDialog(...)` | Confirmation dialog → `DialogResponse?` |
@@ -346,6 +445,38 @@ final dio = DioFactory.create(
 
 ---
 
+### ConnectivityService
+
+`lib/core/services/connectivity_service.dart`
+
+```dart
+// Register in locator:
+locator.registerLazySingleton<ConnectivityService>(ConnectivityService.new);
+
+// In a ViewModel:
+class HomeViewModel extends BaseViewModel with CommonViewModel {
+  final _connectivity = locate<ConnectivityService>();
+
+  Future<void> init() async {
+    _connectivity.onStatusChanged.listen((online) {
+      if (!online) showErr('No internet connection');
+      notifyListeners();
+    });
+    await _connectivity.checkConnectivity();
+  }
+
+  bool get isOnline => _connectivity.isOnline;
+}
+```
+
+| Member | Description |
+|---|---|
+| `isOnline` / `isOffline` | Synchronous current state |
+| `checkConnectivity()` | Async check, updates `isOnline` |
+| `onStatusChanged` | `Stream<bool>` emitting on every change |
+
+---
+
 ### StorageService
 
 `lib/core/services/storage_service.dart`
@@ -366,6 +497,89 @@ final onboarded = storage.getBool('onboarded') ?? false;
 
 await storage.clearAll();
 await storage.clearPrefix('cart_');   // remove all keys starting with 'cart_'
+```
+
+---
+
+## Core — Extensions
+
+### StringX
+
+`lib/core/extensions/string_extensions.dart`
+
+```dart
+'hello world'.titleCase        // 'Hello World'
+'hello world'.capitalized      // 'Hello world'
+'Long text here'.truncate(8)   // 'Long tex…'
+'John Doe'.initials            // 'JD'
+'08012345678'.maskPhone()      // '•••••••5678'
+'4111111111111111'.maskedCard  // '•••• •••• •••• 1111'
+'user@email.com'.isValidEmail  // true
+'abc'.digitsOnly               // ''
+'  '.nullIfEmpty               // null
+
+// Nullable variant
+String? name;
+name.isNullOrEmpty             // true
+name.orEmpty                   // ''
+```
+
+---
+
+### DateTimeX
+
+`lib/core/extensions/datetime_extensions.dart`
+
+```dart
+final dt = DateTime.now().subtract(Duration(hours: 2));
+
+dt.timeAgo           // '2h ago'
+dt.toReadableDate    // '14 Jan 2024'
+dt.toReadableDateTime // '14 Jan 2024, 09:30 AM'
+dt.toTimeString      // '09:30 AM'
+dt.to24HourTime      // '09:30'
+dt.toIso8601Date     // '2024-01-14'
+dt.format('EEEE')    // 'Monday'
+
+dt.isToday           // false
+dt.isYesterday       // false
+dt.isThisWeek        // bool
+dt.isPast            // true
+dt.startOfDay        // DateTime(2024, 1, 14, 0, 0, 0)
+dt.endOfDay          // DateTime(2024, 1, 14, 23, 59, 59)
+dt.addDays(7)        // DateTime + 7 days
+
+// Nullable variant
+DateTime? d;
+d.timeAgoOr('Unknown')         // 'Unknown'
+d.formatOr('dd/MM/yyyy')       // '—'
+```
+
+---
+
+### NumX / IntX
+
+`lib/core/extensions/num_extensions.dart`
+
+```dart
+1200.50.toCurrency(symbol: '₦')   // '₦1,200.50'
+1200.toCurrency(symbol: '\$')      // '\$1,200.00'
+1200.compact                       // '1.2k'
+3_400_000.compact                  // '3.4M'
+0.756.toPercent()                  // '75.6%'
+0.5.toPercent(multiply: false)     // '0.5%'
+
+30.seconds    // Duration(seconds: 30)
+500.milliseconds  // Duration(milliseconds: 500)
+
+5.isPositive  // true
+0.isZero      // true
+
+// IntX
+5.padded()          // '05'
+5.padded(3)         // '005'
+1024.toFileSize     // '1.0 KB'
+1_048_576.toFileSize // '1.0 MB'
 ```
 
 ---
@@ -730,14 +944,55 @@ AppTextField(
 
 AppTextField(
   label: 'Password',
-  obscure: true,           // auto toggles visibility icon
+  obscure: true,              // auto-toggles visibility icon
   validator: Validators.password,
 )
 
 AppTextField(
-  label: 'Bio',
-  maxLines: 4,
-  maxLength: 300,
+  label: 'Search',
+  showClearButton: true,      // shows ✕ icon when field has text
+  controller: _searchCtrl,
+)
+
+AppTextField(label: 'Bio', maxLines: 4, maxLength: 300)
+```
+
+---
+
+### AppSearchField
+
+`lib/ui/shared/app_search_field.dart`
+
+Pill-shaped search input with built-in debounce, clear button, and loading indicator.
+
+```dart
+AppSearchField(
+  hint: 'Search products…',
+  onChanged: viewModel.search,        // fires after 500 ms of inactivity
+  onCleared: viewModel.clearSearch,
+  isLoading: viewModel.isSearching,
+  debounceDuration: Duration(milliseconds: 300),
+)
+```
+
+---
+
+### AppDropdown
+
+`lib/ui/shared/app_dropdown.dart`
+
+Styled dropdown that matches `AppTextField` visually and integrates with `Form`.
+
+```dart
+AppDropdown<String>(
+  label: 'Country',
+  value: viewModel.country,
+  hint: 'Select a country',
+  items: ['Nigeria', 'Ghana', 'Kenya']
+      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+      .toList(),
+  onChanged: viewModel.setCountry,
+  validator: (v) => v == null ? 'Required' : null,
 )
 ```
 
@@ -805,6 +1060,49 @@ AppIconButton(
   outlined: true,
   size: 40,
   tooltip: 'Create new',
+)
+```
+
+---
+
+### AppListTile
+
+`lib/ui/shared/app_list_tile.dart`
+
+Consistent list item with leading, title, subtitle, trailing, chevron, and optional divider.
+
+```dart
+AppListTile(
+  title: 'Notifications',
+  leading: Icon(Icons.notifications_outlined),
+  showChevron: true,
+  onTap: viewModel.openNotifications,
+)
+
+AppListTile(
+  title: 'John Doe',
+  subtitle: 'john@example.com',
+  leading: AppAvatar(name: 'John Doe', size: 40),
+  trailing: StatusChip.active(),
+  showDivider: true,
+)
+```
+
+---
+
+### AppNetworkImage
+
+`lib/ui/shared/app_network_image.dart`
+
+Cached network image with shimmer placeholder and error fallback.
+
+```dart
+AppNetworkImage(
+  url: product.imageUrl,
+  width: double.infinity,
+  height: 200,
+  fit: BoxFit.cover,
+  radius: AppRadius.card,
 )
 ```
 
