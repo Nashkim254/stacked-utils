@@ -178,52 +178,55 @@ class _AppSelectSearchState<T> extends State<AppSelectSearch<T>> {
           targetAnchor: Alignment.bottomLeft,
           followerAnchor: Alignment.topLeft,
           offset: const Offset(0, 4),
-          child: SizedBox(
-            width: width,
-            child: Material(
-              elevation: 8,
-              shadowColor: Colors.black26,
-              borderRadius: AppRadius.inputBR,
-              color: isLight ? AppColors.surface : AppColors.surfaceDark,
-              child: ConstrainedBox(
-                constraints:
-                    BoxConstraints(maxHeight: widget.maxDropdownHeight),
-                child: _filtered.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(AppSpacing.md),
-                        child: Text(
-                          widget.noResultsText,
-                          style: AppTextStyles.body
-                              .copyWith(color: AppColors.grey400),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: AppSpacing.xs),
-                        shrinkWrap: true,
-                        itemCount: _filtered.length,
-                        itemBuilder: (_, i) {
-                          final item = _filtered[i];
-                          return InkWell(
-                            onTap: () => _select(item),
-                            borderRadius: AppRadius.inputBR,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.md,
-                                vertical: AppSpacing.sm + 2,
-                              ),
-                              child: Text(
-                                widget.displayLabel(item),
-                                style: AppTextStyles.body.copyWith(
-                                  color: isLight
-                                      ? AppColors.grey900
-                                      : Colors.white,
+          child: TapRegion(
+            groupId: this,
+            child: SizedBox(
+              width: width,
+              child: Material(
+                elevation: 8,
+                shadowColor: Colors.black26,
+                borderRadius: AppRadius.inputBR,
+                color: isLight ? AppColors.surface : AppColors.surfaceDark,
+                child: ConstrainedBox(
+                  constraints:
+                      BoxConstraints(maxHeight: widget.maxDropdownHeight),
+                  child: _filtered.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          child: Text(
+                            widget.noResultsText,
+                            style: AppTextStyles.body
+                                .copyWith(color: AppColors.grey400),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.xs),
+                          shrinkWrap: true,
+                          itemCount: _filtered.length,
+                          itemBuilder: (_, i) {
+                            final item = _filtered[i];
+                            return InkWell(
+                              onTap: () => _select(item),
+                              borderRadius: AppRadius.inputBR,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.md,
+                                  vertical: AppSpacing.sm + 2,
+                                ),
+                                child: Text(
+                                  widget.displayLabel(item),
+                                  style: AppTextStyles.body.copyWith(
+                                    color: isLight
+                                        ? AppColors.grey900
+                                        : Colors.white,
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
+                            );
+                          },
+                        ),
+                ),
               ),
             ),
           ),
@@ -252,6 +255,7 @@ class _AppSelectSearchState<T> extends State<AppSelectSearch<T>> {
     return CompositedTransformTarget(
       link: _layerLink,
       child: TapRegion(
+        groupId: this,
         onTapOutside: (_) => _focusNode.unfocus(),
         child: TextFormField(
           controller: _controller,
