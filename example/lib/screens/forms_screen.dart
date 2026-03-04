@@ -18,10 +18,17 @@ class _FormsScreenState extends State<FormsScreen> {
 
   String? _selectedCountry;
   String? _selectedCity;
+  List<String> _selectedSkills = [];
+  String _otpValue = '';
   bool _submitting = false;
   String _searchQuery = '';
 
   static const _countries = ['Nigeria', 'Ghana', 'Kenya', 'South Africa', 'Egypt'];
+
+  static const _skills = [
+    'Flutter', 'Dart', 'Firebase', 'REST APIs', 'GraphQL',
+    'Git', 'CI/CD', 'Unit Testing', 'State Management', 'UI/UX',
+  ];
 
   static const _cities = [
     'Lagos', 'Abuja', 'Kano', 'Ibadan', 'Port Harcourt',
@@ -93,6 +100,46 @@ class _FormsScreenState extends State<FormsScreen> {
             if (_selectedCity != null) ...[
               const Gap(AppSpacing.sm),
               Text('Selected: $_selectedCity',
+                  style: AppTextStyles.bodySm.copyWith(color: AppColors.grey500)),
+            ],
+
+            const Gap(AppSpacing.xl),
+
+            // ── OTP field ─────────────────────────────────────────────────
+            Text('AppOtpField', style: context.textTheme.headlineSmall),
+            const Gap(AppSpacing.md),
+            AppOtpField(
+              length: 6,
+              onChanged: (v) => setState(() => _otpValue = v),
+              onCompleted: (v) => ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('OTP entered: $v')),
+              ),
+            ),
+            if (_otpValue.isNotEmpty) ...[
+              const Gap(AppSpacing.sm),
+              Text('Current: $_otpValue',
+                  style: AppTextStyles.bodySm.copyWith(color: AppColors.grey500)),
+            ],
+
+            const Gap(AppSpacing.xl),
+
+            // ── Multi select ──────────────────────────────────────────────
+            Text('AppMultiSelect', style: context.textTheme.headlineSmall),
+            const Gap(AppSpacing.md),
+            AppMultiSelect<String>(
+              label: 'Skills',
+              hint: 'Select your skills',
+              items: _skills,
+              displayLabel: (s) => s,
+              values: _selectedSkills,
+              onChanged: (v) => setState(() => _selectedSkills = v),
+              maxSelections: 5,
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Select at least one skill' : null,
+            ),
+            if (_selectedSkills.isNotEmpty) ...[
+              const Gap(AppSpacing.sm),
+              Text('Selected: ${_selectedSkills.join(', ')}',
                   style: AppTextStyles.bodySm.copyWith(color: AppColors.grey500)),
             ],
 

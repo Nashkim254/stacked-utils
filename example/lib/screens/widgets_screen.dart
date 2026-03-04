@@ -14,6 +14,7 @@ class _WidgetsScreenState extends State<WidgetsScreen> {
   bool _showCard  = true;
   bool _isBusy    = false;
   bool _isLoading = true;
+  List<String> _selectedTags = ['Flutter'];
 
   @override
   void initState() {
@@ -280,6 +281,107 @@ class _WidgetsScreenState extends State<WidgetsScreen> {
                   ]),
                 ],
               ),
+            ),
+
+            // ── AppExpandable ─────────────────────────────────────────────
+            _heading(context, 'AppExpandable'),
+            AppExpandable(
+              title: const Text('What is app_kit?'),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md, 0, AppSpacing.md, AppSpacing.md),
+                child: Text(
+                  'app_kit is a shared Flutter utility package providing production-ready '
+                  'widgets, services, mixins and extensions for Stacked-architecture apps.',
+                  style: AppTextStyles.body,
+                ),
+              ),
+            ),
+            const Gap(AppSpacing.sm),
+            AppExpandable(
+              title: const Text('Initially expanded section'),
+              initiallyExpanded: true,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md, 0, AppSpacing.md, AppSpacing.md),
+                child: Text('This panel starts open.', style: AppTextStyles.body),
+              ),
+            ),
+
+            // ── AppChipGroup ──────────────────────────────────────────────
+            _heading(context, 'AppChipGroup'),
+            AppChipGroup<String>(
+              items: const ['Flutter', 'Dart', 'Firebase', 'REST API', 'GraphQL'],
+              displayLabel: (s) => s,
+              selected: _selectedTags,
+              onChanged: (v) => setState(() => _selectedTags = v),
+            ),
+            if (_selectedTags.isNotEmpty) ...[
+              const Gap(AppSpacing.sm),
+              Text('Selected: ${_selectedTags.join(', ')}',
+                  style: AppTextStyles.bodySm.copyWith(color: AppColors.grey500)),
+            ],
+
+            // ── AppReadMoreText ───────────────────────────────────────────
+            _heading(context, 'AppReadMoreText'),
+            AppCard(
+              child: AppReadMoreText(
+                text:
+                    'Flutter is Google\'s UI toolkit for building beautiful, natively compiled '
+                    'applications for mobile, web, and desktop from a single codebase. '
+                    'It uses the Dart programming language and provides a rich set of '
+                    'pre-built widgets that follow Material Design and Cupertino guidelines. '
+                    'With Flutter, you can build fast, expressive, and flexible apps that '
+                    'run on iOS, Android, the web, and desktop — all from one codebase.',
+                maxLines: 2,
+              ),
+            ),
+
+            // ── AppDialog ────────────────────────────────────────────────
+            _heading(context, 'AppDialog'),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                AppButton(
+                  label: 'Show dialog',
+                  size: ButtonSize.sm,
+                  variant: ButtonVariant.outline,
+                  onTap: () => AppDialog.show(
+                    context,
+                    title: 'Information',
+                    content: 'This is a standard informational dialog.',
+                  ),
+                ),
+                AppButton(
+                  label: 'Confirm dialog',
+                  size: ButtonSize.sm,
+                  variant: ButtonVariant.outline,
+                  onTap: () async {
+                    final confirmed = await AppDialog.confirm(
+                      context,
+                      title: 'Delete item?',
+                      content: 'This action cannot be undone.',
+                      confirmText: 'Delete',
+                      destructive: true,
+                    );
+                    if (context.mounted) {
+                      context.showSnackbar(
+                          confirmed ? 'Deleted!' : 'Cancelled');
+                    }
+                  },
+                ),
+                AppButton(
+                  label: 'Alert dialog',
+                  size: ButtonSize.sm,
+                  variant: ButtonVariant.outline,
+                  onTap: () => AppDialog.alert(
+                    context,
+                    title: 'Error',
+                    content: 'Something went wrong. Please try again.',
+                  ),
+                ),
+              ],
             ),
 
             const Gap(AppSpacing.xl),

@@ -13,14 +13,19 @@ export 'core/extensions/locator_helper.dart';
 export 'core/extensions/string_extensions.dart';
 export 'core/extensions/datetime_extensions.dart';
 export 'core/extensions/num_extensions.dart';
+export 'core/extensions/list_extensions.dart';
+export 'core/extensions/color_extensions.dart';
 
 // ── Core — Mixins ────────────────────────────────────────────────────────────
 export 'core/mixins/common_viewmodel_mixin.dart';
 export 'core/mixins/pagination_mixin.dart';
+export 'core/mixins/form_mixin.dart';
+export 'core/mixins/infinite_scroll_mixin.dart';
 
 // ── Core — Services ──────────────────────────────────────────────────────────
 export 'core/services/base_api_service.dart';
 export 'core/services/storage_service.dart';
+export 'core/services/secure_storage_service.dart';
 export 'core/services/connectivity_service.dart';
 
 // ── UI — Constants ───────────────────────────────────────────────────────────
@@ -59,3 +64,9 @@ export 'ui/shared/app_list_tile.dart';
 export 'ui/shared/app_network_image.dart';
 export 'ui/shared/app_dropdown.dart';
 export 'ui/shared/app_select_search.dart';
+export 'ui/shared/app_otp_field.dart';
+export 'ui/shared/app_multi_select.dart';
+export 'ui/shared/app_expandable.dart';
+export 'ui/shared/app_chip_group.dart';
+export 'ui/shared/app_read_more_text.dart';
+export 'ui/shared/app_dialog.dart';
